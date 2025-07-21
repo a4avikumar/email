@@ -1,20 +1,14 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from flask import Flask, request, jsonify
 from validator import validate_email_address_custom
 
-app = FastAPI()
+app = Flask(__name__)
 
-class EmailRequest(BaseModel):
-    email: str
+@app.route("/validate_email", methods=["POST"])
+def validate_email():
+    data = request.get_json()
+    if not data or 'email' not in data:
+        return jsonify({"error": "Email field required"}), 400
+    result = validate_email_address_custom(data['email'])
+    return jsonify(result)
 
-@app.post("/validate_email")
-async def validate_email(request: EmailRequest):
-    try:
-        result = validate_email_address_custom(request.email)
-        return JSONResponse(content=result)
-    except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
-# For Vercel compatibility
-# vercel-python looks for a variable named "app"
+# Vercel will look for "app" variable!
